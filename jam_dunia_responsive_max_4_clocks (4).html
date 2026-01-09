@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>World Clock</title>
+  <style>
+    :root{
+      --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364;
+      --panel:#0b1220;
+      --accent:#1f6feb;
+      --accent-2:#2b6df6;
+      --danger-start:#ff8a80; --danger-end:#ff5252;
+      --text:#eaf2ff;
+      --muted:rgba(234,242,255,0.75);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family:system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+      color:var(--text);
+      display:flex;align-items:center;justify-content:center;padding:20px;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    .app{
+      width:100%;max-width:760px;background:linear-gradient(180deg, rgba(6,10,16,0.96), rgba(10,14,20,0.94));border-radius:16px;padding:18px;box-shadow:0 32px 80px rgba(2,6,12,0.75);display:flex;flex-direction:column;gap:12px;transform:translateZ(0);
+    }
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:1.2rem;display:flex;align-items:center;gap:10px}
+
+    .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+    .custom-select{position:relative}
+    .select-toggle{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:var(--panel);border:1px solid rgba(255,255,255,0.04);cursor:pointer;font-weight:700;color:var(--text);min-width:220px;transition:box-shadow 160ms ease, transform 160ms ease}
+    .select-toggle:focus{outline:2px solid rgba(31,107,235,0.14)}
+    .select-toggle:hover{transform:translateY(-2px)}
+
+    .options{position:absolute;right:0;top:calc(100% + 10px);background:var(--panel);border-radius:12px;padding:6px;min-width:300px;box-shadow:0 22px 60px rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.04);z-index:40;display:none;max-height:240px;overflow:auto}
+    .options.open{display:block}
+    .option{padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:700;color:var(--text);white-space:nowrap;display:flex;justify-content:space-between;align-items:center}
+    .option:hover{background:linear-gradient(90deg, rgba(31,107,235,0.08), rgba(31,107,235,0.04));transform:translateX(6px)}
+
+    /* Gradient scrollbar */
+    .options::-webkit-scrollbar{width:12px}
+    .options::-webkit-scrollbar-track{background:transparent;border-radius:8px}
+    .options::-webkit-scrollbar-thumb{border-radius:8px;background:linear-gradient(180deg, rgba(31,107,235,0.95), rgba(58,123,213,0.95));box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03)}
+    .options{scrollbar-width:auto;scrollbar-color: rgba(31,107,235,0.95) transparent}
+
+    #add-btn{padding:9px 12px;border-radius:10px;border:none;background:linear-gradient(180deg,var(--accent-2),var(--accent));cursor:pointer;font-weight:800;color:#fff;transition:transform 160ms ease, box-shadow 160ms ease}
+    #add-btn:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 12px 40px rgba(31,107,235,0.16)}
+    #add-btn:disabled{opacity:0.45;cursor:not-allowed;transform:none}
+
+    .clock-list{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:640px){.clock-list{grid-template-columns:1fr 1fr}}
+
+    .clock{
+      display:flex;justify-content:space-between;align-items:center;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));min-height:68px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 8px 22px rgba(2,6,12,0.5);overflow:hidden;will-change:transform,opacity;backface-visibility:hidden;transform: translateZ(0);
+    }
+    .meta{display:flex;flex-direction:column;gap:6px}
+    .city{font-weight:900;color:var(--text)}
+    .tz{font-size:0.78rem;color:var(--muted)}
+    .time{font-variant-numeric:tabular-nums;font-weight:900;font-size:1.08rem;color:var(--text)}
+
+    .actions{display:flex;gap:8px;align-items:center}
+
+    /* Trash button now visible, circular with gradient and hover pop */
+    .trash{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:none;padding:0;background:linear-gradient(180deg,var(--danger-start),var(--danger-end));color:white;cursor:pointer;box-shadow:0 8px 18px rgba(255,82,82,0.12);transition:transform 180ms cubic-bezier(.2,.9,.2,1), box-shadow 180ms ease, opacity 160ms ease}
+    .trash svg{width:18px;height:18px;filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));}
+    .trash:active{transform:translateY(1px) scale(0.98)}
+    .trash:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 18px 40px rgba(255,82,82,0.18)}
+    .trash[disabled]{opacity:0.36;cursor:not-allowed;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:none}
+
+    /* subtle enter with tiny scale and stagger */
+    .clock{opacity:0;transform:translateY(10px) scale(0.996)}
+    .clock.show{opacity:1;transform:translateY(0) scale(1);transition:transform 360ms cubic-bezier(.16,1,.3,1), opacity 300ms ease}
+    .clock.removing{opacity:0;transform:translateY(-12px) scale(0.994)}
+
+    /* footer */
+    .footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.03);min-height:48px}
+    .credits{display:flex;gap:12px;align-items:center;font-size:0.88rem;color:var(--muted);height:32px}
+
+    /* X logo styling */
+    .x-logo{width:20px;height:20px;object-fit:contain;display:inline-block}
+    .link-text{display:inline-flex;align-items:center;gap:8px}
+
+    .credits.right{font-size:0.88rem;color:var(--muted);display:flex;align-items:center;height:32px}
+
+    .disclaimer{font-size:0.78rem;color:var(--muted);opacity:0.95;margin-top:10px;line-height:1.35}
+
+    a.link{color:var(--muted);text-decoration:none;font-weight:800;display:inline-flex;align-items:center;gap:8px}
+
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="World Clock">
+    <header>
+      <h1><span aria-hidden="true">🕰️</span> World Clock</h1>
+
+      <div class="controls">
+        <div class="custom-select" id="tz-select-box">
+          <div class="select-toggle" id="selectToggle" tabindex="0" aria-haspopup="listbox" aria-expanded="false">Add Clock ▾</div>
+          <div class="options" id="tz-options" role="listbox" aria-label="Timezone options"></div>
+        </div>
+        <button id="add-btn" type="button">Add</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="clock-list" id="clock-list" aria-live="polite"></div>
+
+      <div class="footer">
+        <div class="credits left">
+          <a class="link" href="https://x.com/Yuan_SF24983" target="_blank" rel="noopener noreferrer" aria-label="Follow Dev on X">
+            <img src="x.png" alt="X logo" class="x-logo" onerror="this.style.display='none'" />
+            <span class="link-text">Follow Dev on X</span>
+          </a>
+        </div>
+
+        <div class="credits right">Made by AI Chatbot</div>
+      </div>
+
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> Times shown are meant for convenience and rely on your device clock and standardized IANA timezone identifiers. While clocks update every second, small discrepancies can occur due to device clock differences, browser performance, or network-related time adjustments. UTC and your device local time are fixed and cannot be removed. Optional clocks are stored locally in your browser (localStorage) and will remain until you remove them. This tool provides approximate times and is <em>not</em> guaranteed for mission-critical scheduling. Use official time sources for precise synchronization. Also note that customized scrollbars and visual styles may render differently across browsers — the look is optimized for modern Chromium-based browsers. For accessibility, scrollbar contrast and hit area have been considered per best practice.
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      const MAX_CLOCKS = 4;
+      const FIXED = [
+        { id:'utc', label:'UTC', tz:'UTC', fixed:true },
+        { id:'local', label:'Local (Device)', tz:null, fixed:true }
+      ];
+
+      const TIMEZONES = [
+        'Asia/Tokyo','America/New_York','Europe/London','Europe/Paris','Asia/Shanghai','Australia/Sydney','Asia/Kolkata','America/Los_Angeles','Europe/Berlin','Africa/Cairo'
+      ];
+
+      const STORAGE_KEY = 'worldClock_optional_v4';
+      let optional = loadOptional();
+
+      const clockList = document.getElementById('clock-list');
+      const addBtn = document.getElementById('add-btn');
+      const tzOptions = document.getElementById('tz-options');
+      const selectToggle = document.getElementById('selectToggle');
+      const tzSelectBox = document.getElementById('tz-select-box');
+
+      const timeNodes = new Map();
+
+      function loadOptional(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if(!raw) return [];
+          const parsed = JSON.parse(raw);
+          if(Array.isArray(parsed)) return parsed;
+        }catch(e){console.warn('loadOptional err', e)}
+        return [];
+      }
+      function saveOptional(){
+        try{localStorage.setItem(STORAGE_KEY, JSON.stringify(optional))}catch(e){console.warn(e)}
+      }
+
+      function buildOptions(){
+        tzOptions.innerHTML = '';
+        TIMEZONES.forEach(tz=>{
+          const el = document.createElement('div');
+          el.className = 'option';
+          el.textContent = tz.split('/').pop().replace(/_/g,' ') + ` (${tz})`;
+          el.dataset.tz = tz;
+          el.role = 'option';
+          el.tabIndex = 0;
+          el.addEventListener('click', ()=> selectOption(tz));
+          el.addEventListener('keydown', (e)=>{ if(e.key==='Enter') selectOption(tz); });
+          tzOptions.appendChild(el);
+        });
+      }
+
+      function selectOption(tz){
+        selectToggle.dataset.selected = tz;
+        selectToggle.textContent = tz.split('/').pop().replace(/_/g,' ') + ' ▾';
+        closeOptions();
+      }
+
+      function toggleOptions(){
+        const open = tzOptions.classList.toggle('open');
+        selectToggle.setAttribute('aria-expanded', String(open));
+        if(open){ tzOptions.querySelector('.option')?.focus(); }
+      }
+      function closeOptions(){ tzOptions.classList.remove('open'); selectToggle.setAttribute('aria-expanded','false'); }
+
+      function createClock(id, label, tz, fixed=false){
+        const el = document.createElement('div'); el.className='clock'; el.id = id;
+        const meta = document.createElement('div'); meta.className='meta';
+        const city = document.createElement('div'); city.className='city'; city.textContent = label;
+        const tzel = document.createElement('div'); tzel.className='tz'; tzel.textContent = tz || (fixed? 'Device local time' : '—');
+        meta.appendChild(city); meta.appendChild(tzel);
+
+        const timeWrap = document.createElement('div'); timeWrap.className='actions';
+        const timeNode = document.createElement('div'); timeNode.className='time'; timeNode.textContent='--:--:--';
+        timeWrap.appendChild(timeNode);
+
+        const trash = document.createElement('button'); trash.className='trash'; trash.title='Remove clock';
+        trash.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 6h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 11v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 11v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>`;
+
+        if(fixed){ trash.disabled = true; trash.setAttribute('disabled','true'); trash.style.background = 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))'; trash.style.boxShadow='none'; }
+        else{ trash.addEventListener('click', ()=> removeOptional(tz)); }
+
+        timeWrap.appendChild(trash);
+        el.appendChild(meta); el.appendChild(timeWrap);
+
+        const delay = Math.min(200, (clockList.children.length) * 60);
+        el.style.transitionDelay = delay + 'ms';
+
+        timeNodes.set(id, { node: timeNode, tz: tz, fixed: !!fixed });
+        clockList.appendChild(el);
+        requestAnimationFrame(()=> el.classList.add('show'));
+      }
+
+      function initClocks(){
+        clockList.innerHTML = '';
+        timeNodes.clear();
+        FIXED.forEach(f=> createClock(f.id, f.label, f.tz, true));
+        optional.forEach((tz,i)=> createClock('opt'+(i+1), tz.split('/').pop().replace(/_/g,' ')+` (${tz})`, tz, false));
+        refreshAddState();
+      }
+
+      function refreshAddState(){
+        const total = FIXED.length + optional.length;
+        if(total >= MAX_CLOCKS){ addBtn.disabled = true; selectToggle.classList.add('disabled'); }
+        else{ addBtn.disabled = false; selectToggle.classList.remove('disabled'); }
+      }
+
+      function addOptionalTZ(tz){
+        if(!tz) return; if(optional.includes(tz)) return; if(optional.length >= (MAX_CLOCKS - FIXED.length)) return;
+        optional.push(tz); saveOptional(); createClock('opt'+optional.length, tz.split('/').pop().replace(/_/g,' ')+` (${tz})`, tz, false); refreshAddState();
+      }
+
+      function removeOptional(tz){
+        const idx = optional.indexOf(tz);
+        if(idx === -1) return;
+        const el = document.getElementById('opt'+(idx+1));
+        if(el){ el.classList.add('removing'); setTimeout(()=>{ optional.splice(idx,1); saveOptional(); rebuildOptionalElements(); },260); }
+        else { optional.splice(idx,1); saveOptional(); rebuildOptionalElements(); }
+      }
+
+      function rebuildOptionalElements(){
+        const rem = Array.from(document.querySelectorAll('[id^="opt"]'));
+        rem.forEach(n=>n.remove());
+        optional.forEach((tz,i)=> createClock('opt'+(i+1), tz.split('/').pop().replace(/_/g,' ')+` (${tz})`, tz, false));
+        refreshAddState();
+      }
+
+      function startTicker(){
+        function tick(){ updateTimes(); const now=Date.now(); const msToNext = 1000 - (now % 1000); setTimeout(tick, msToNext); }
+        tick();
+      }
+
+      function updateTimes(){
+        const now = new Date();
+        for(const [id, info] of timeNodes.entries()){
+          let text;
+          if(info.fixed && info.tz === 'UTC'){
+            text = now.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+          } else if(info.fixed && !info.tz){
+            text = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+          } else if(info.tz){
+            try{ text = now.toLocaleTimeString('en-GB', { timeZone: info.tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+            catch(e){ text = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+          } else {
+            text = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+          }
+          if(info.node.textContent !== text) info.node.textContent = text;
+        }
+      }
+
+      // wire UI
+      buildOptions(); initClocks(); startTicker();
+      selectToggle.addEventListener('click', ()=> toggleOptions());
+      selectToggle.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') toggleOptions(); if(e.key==='Escape') closeOptions(); });
+      document.addEventListener('click', (e)=>{ if(!tzSelectBox.contains(e.target)) closeOptions(); });
+      addBtn.addEventListener('click', ()=>{ const tz = selectToggle.dataset.selected; addOptionalTZ(tz); });
+      addBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter') addBtn.click(); });
+
+      window.worldClock_v4 = { optional, addOptionalTZ, removeOptional };
+
+    })();
+  </script>
+</body>
+</html>
