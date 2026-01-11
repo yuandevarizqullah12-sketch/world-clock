@@ -2,31 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+
   <!-- Site verification -->
   <meta name="google-site-verification" content="PIRrBQx3dxfzNhmHGWAtJoChkMKWcgHOa_703tZEsDg" />
 
   <!-- Basic / SEO -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="index, follow, max-snippet:200, max-image-preview:large" />
-  <meta name="description" content="Simple, fast World Clock showing UTC and your device local time with optional global time zones. Lightweight, responsive, updates every second.">
+  <meta name="description" content="Simple, fast World Clock showing UTC and your device local time with optional global time zones. Lightweight, responsive, updates every second." />
   <link rel="canonical" href="https://world-clock-sand-iota.vercel.app/" />
 
+  <!-- Title -->
   <title>World Clock | UTC & Local Time</title>
 
-  <!-- Favicons (logo.png used as PNG favicon; favicon.ico as fallback) -->
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <link rel="icon" href="logo.png" type="image/png">
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
 
-  <!-- Preload important image used in footer / social preview -->
-  <link rel="preload" href="x.png" as="image">
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="World Clock" />
 
-  <!-- Sitemap hint (helpful) -->
-  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
+  <!-- Manifest (PWA) -->
+  <link rel="manifest" href="/site.webmanifest" />
 
-  <!-- Open Graph & Twitter Card for better sharing -->
+  <!-- Preload important image -->
+  <link rel="preload" href="/logo.png" as="image" />
+
+  <!-- Sitemap hint -->
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+
+  <!-- Open Graph & Twitter Card -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="World Clock | UTC & Local Time" />
-  <meta property="og:description" content="Simple, fast World Clock showing UTC and your device local time with optional global time zones. Lightweight and responsive." />
+  <meta property="og:description" content="Simple, fast World Clock showing UTC and your device local time with optional global time zones." />
   <meta property="og:url" content="https://world-clock-sand-iota.vercel.app/" />
   <meta property="og:image" content="https://world-clock-sand-iota.vercel.app/logo.png" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -37,7 +47,7 @@
   <!-- Theme color -->
   <meta name="theme-color" content="#0f2027" />
 
-  <!-- Structured data (improves trust in search engines) -->
+  <!-- Structured data (JSON-LD) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -48,11 +58,26 @@
   }
   </script>
 
+  <!-- GOOGLE ANALYTICS (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZLDSNR1LF4"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ZLDSNR1LF4');
+  </script>
+
+  <!-- Minimal critical CSS -->
   <style>
     /* Respect reduced motion for accessibility & perf */
     @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+      * {
+        transition: none !important;
+        animation: none !important;
+        scroll-behavior: auto !important;
+      }
     }
+    
 
     /* --- Theme variables --- */
     :root{
